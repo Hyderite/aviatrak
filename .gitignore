@@ -15,3 +15,5 @@ nixpacks-out/
 
 .DS_Store
 Thumbs.db
+
+index.js
