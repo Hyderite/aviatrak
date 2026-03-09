@@ -18,9 +18,11 @@
     "build:css": "postcss public/src/css/*.css --dir public/dist/css/ --ext .min.css",
     "build:ts": "tsc",
     "build": "pnpm build:css && pnpm build:ts",
+    "start": "node dist/index.js",
     "dev:ts": "tsc -w",
+    "dev:node": "node --watch dist/src/index.js",
     "dev:css": "chokidar \"public/src/css/**/*.css\" -c \"pnpm build:css\"",
-    "dev": "concurrently \"pnpm dev:ts\" \"pnpm dev:css\""
+    "dev": "concurrently \"pnpm dev:ts\" \"pnpm dev:css\" \"pnpm dev:node\""
   },
   "pnpm": {
     "onlyBuiltDependencies": [

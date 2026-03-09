@@ -2,15 +2,20 @@
     "compilerOptions": {
         "target": "ES6",
         "module": "NodeNext",
+        "moduleResolution": "NodeNext",
         "outDir": "./dist",
-        "rootDir": "./",
+        "rootDir": "./src",
         "strict": true,
         "esModuleInterop": true,
-        "moduleResolution": "NodeNext",
-        "isolatedModules": true
+        "composite": true,
+        "skipLibCheck": true
     },
     "include": [
-        "src/**/*",
-        "public/src/ts/**/*"
+        "src/**/*"
+    ],
+    "references": [
+        {
+            "path": "./public"
+        }
     ]
 }
