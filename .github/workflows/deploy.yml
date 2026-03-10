@@ -1,77 +1,60 @@
-name: Deploy Node App
+name: Node.js deployment
+
 on:
   push:
-    branches: [main] # Double-check if your branch is 'master' or 'main'
+    branches: ['${{ github.event.repository.default_branch }}']
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
         with:
-          version: 9 # Updated to 9 for 2026 compatibility
+          version: 10.28.2
+          run_install: true
 
-      - name: Install & Build
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
         run: |
           pnpm install
+
+      - name: Build
+        run: |
           pnpm build
 
-      - name: Install Cloudflared
+      - name: Install cloudflared
         run: |
-          curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
-          chmod +x cloudflared
-          sudo mv cloudflared /usr/local/bin/
+          curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared.deb
 
-      - name: Deploy and Restart
-        env:
-          SSH_KEY: ${{ secrets.SSH_KEY }}
-          CF_ID: ${{ secrets.CF_CLIENT_ID }}
-          CF_SECRET: ${{ secrets.CF_CLIENT_SECRET }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
+      - name: Deploy
         run: |
           mkdir -p ~/.ssh
-          echo "$SSH_KEY" > ~/.ssh/id_ed25519
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-          # 1. Setup the Tunnel SSH Config
           cat <<EOF > ~/.ssh/config
-          Host $SSH_HOST
-            ProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h --service-token-id $CF_ID --service-token-secret $CF_SECRET
-            StrictHostKeyChecking no
-            UserKnownHostsFile /dev/null
+          Host vps
+          HostName ${{ secrets.SSH_HOST }}
+          User ${{ secrets.SSH_USER }}
+          IdentityFile ~/.ssh/id_ed25519
+          ProxyCommand cloudflared access ssh --id ${{ secrets.CF_API_TOKEN }} --secret ${{ secrets.CF_API_SECRET }} --hostname %h
+          StrictHostKeyChecking no
           EOF
 
-          # 2. Sync files
-          # We include package.json and the built dist/public folders
-          # We exclude node_modules because we'll install fresh on the server
-          rsync -avz --delete \
-            --exclude 'node_modules' \
-            --exclude '.git' \
-            --exclude 'src' \
-            ./ $SSH_USER@$SSH_HOST:/var/www/aviatrak/
+          ssh vps "mkdir -p /var/www/${{ github.event.repository.name }}/dist"
+          ssh vps "mkdir -p /var/www/${{ github.event.repository.name }}/public/dist"
 
-          # 3. Remote Restart (The Node.js specific part)
-          ssh $SSH_USER@$SSH_HOST << 'REMOTE_EOF'
-            cd /var/www/aviatrak
-            
-            # Install production-only modules (Saves RAM/CPU on Nonic)
-            pnpm install --prod
-            
-            # Restart the process using PM2
-            # 'reload' is zero-downtime. If it doesn't exist yet, it will 'start'
-            pm2 reload aviatrak || pm2 start "pnpm exec tsx src/ts/index.ts" --name aviatrak
-            pm2 save
-          REMOTE_EOF
+          rsync -avz ./dist/ vps:/var/www/${{ github.event.repository.name }}/dist/
+          rsync -avz ./public/dist/ vps:/var/www/${{ github.event.repository.name }}/public/dist/
 
-      # Optional: Keep this if you want to clear the Cloudflare Edge Cache
-      - name: Purge Cloudflare Cache
-        run: |
-          curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/purge_cache" \
-          -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
-          -H "Content-Type: application/json" \
-          --data '{"hosts":["aviatrak.com"]}'
+          ssh vps "pm2 restart ${{ github.event.repository.name }} || pm2 start /var/www/${{ github.event.repository.name }}/dist/index.js --name ${{ github.event.repository.name }}"
