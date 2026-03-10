@@ -36,7 +36,7 @@ jobs:
             cd /var/www/${{ github.event.repository.name }}
             
             # 1. Build the environment using Nixpacks
-            /usr/local/bin/nixpacks build . --name ${{ github.event.repository.name }}
+            /usr/bin/nixpacks build . --name ${{ github.event.repository.name }}
             
             # 2. Restart the app using the fixed PM2 path
             # We delete first to ensure a clean start with the new build
