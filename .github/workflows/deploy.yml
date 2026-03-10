@@ -58,4 +58,4 @@ jobs:
           rsync -avz -e ssh ./dist/ vps:/var/www/${{ github.event.repository.name }}/dist/
           rsync -avz -e ssh ./public/dist/ vps:/var/www/${{ github.event.repository.name }}/public/dist/
 
-          ssh vps "pm2 restart ${{ github.event.repository.name }} || pm2 start /var/www/${{ github.event.repository.name }}/dist/index.js --name ${{ github.event.repository.name }}"
+          ssh vps "pm2 restart ${{ github.event.repository.name }} || pm2 start /var/www/${{ github.event.repository.name }}/dist/js/index.js --name ${{ github.event.repository.name }}"
