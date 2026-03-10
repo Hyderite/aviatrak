@@ -36,12 +36,15 @@ jobs:
           sudo dpkg -i cloudflared.deb
 
       - name: Deploy
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_API_SECRET: ${{ secrets.CF_API_SECRET }}
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-          cat <<EOF > ~/.ssh/config
+          cat <<'EOF' > ~/.ssh/config
           Host vps
           HostName ${{ secrets.SSH_HOST }}
           User ${{ secrets.SSH_USER }}
@@ -50,10 +53,9 @@ jobs:
           StrictHostKeyChecking no
           EOF
 
-          ssh vps "mkdir -p /var/www/${{ github.event.repository.name }}/dist"
-          ssh vps "mkdir -p /var/www/${{ github.event.repository.name }}/public/dist"
+          ssh vps "mkdir -p /var/www/${{ github.event.repository.name }}/dist/ /var/www/${{ github.event.repository.name }}/public/dist"
 
-          rsync -avz ./dist/ vps:/var/www/${{ github.event.repository.name }}/dist/
-          rsync -avz ./public/dist/ vps:/var/www/${{ github.event.repository.name }}/public/dist/
+          rsync -avz -e ssh ./dist/ vps:/var/www/${{ github.event.repository.name }}/dist/
+          rsync -avz -e ssh ./public/dist/ vps:/var/www/${{ github.event.repository.name }}/public/dist/
 
           ssh vps "pm2 restart ${{ github.event.repository.name }} || pm2 start /var/www/${{ github.event.repository.name }}/dist/index.js --name ${{ github.event.repository.name }}"
