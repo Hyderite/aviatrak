@@ -31,3 +31,6 @@ OR on pre-existing repos:
 
 ## 📝 Configuration Note
 This project uses **Cloudflare Service Tokens** (`CF_CLIENT_ID` and `CF_CLIENT_SECRET`) to securely bypass Access Policies during the GitHub Action deployment. Ensure these are set in your repository secrets for the pipeline to succeed.
+
+## ⚖️ License & Attribution
+**Aviatrak** is open-source software licensed under the [GNU AGPLv3](./LICENSE).
