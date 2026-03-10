@@ -39,6 +39,7 @@ jobs:
         env:
           CF_CLIENT_ID: ${{ secrets.CF_CLIENT_ID }}
           CF_CLIENT_SECRET: ${{ secrets.CF_CLIENT_SECRET }}
+          NAME: ${{ github.event.repository.name }}
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_ed25519
@@ -53,7 +54,7 @@ jobs:
           StrictHostKeyChecking no
           EOF
 
-          ssh vps "mkdir -p /var/www/${{ github.event.repository.name }}/dist/ /var/www/${{ github.event.repository.name }}/public/dist"
+          ssh vps "mkdir -p /var/www/$NAME/dist/ /var/www/$NAME/public/dist"
 
           rsync -avz --delete \
             --exclude 'node_modules' \
@@ -61,6 +62,13 @@ jobs:
             --exclude '.git' \
             --exclude '.github' \
             --exclude '.env' \
-            -e ssh ./ vps:/var/www/${{ github.event.repository.name }}/
+            -e ssh ./ vps:/var/www/$NAME/
 
-          ssh vps "pm2 delete ${{ github.event.repository.name }} || true && sudo fuser -k 8080/tcp || true && pm2 start /var/www/${{ github.event.repository.name }}/dist/js/index.js --name ${{ github.event.repository.name }} --update-env"
+          ssh vps << SSH_EOF
+            cd /var/www/$NAME
+            pnpm install --prod --frozen-lockfile
+            pm2 describe $NAME > /dev/null \
+              && pm2 restart $NAME --update-env \
+              || pm2 start dist/js/index.js --name $NAME
+            pm2 save
+          SSH_EOF
