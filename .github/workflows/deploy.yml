@@ -39,17 +39,21 @@ jobs:
             echo "Clearing port 8080..."
             fuser -k 8080/tcp || true
             
-            # 2. Install dependencies (so tsx and others are present)
-            # Using the direct path to the pnpm binary for reliability
+            # 2. Install dependencies
+            echo "Installing dependencies..."
             ~/.local/share/pnpm/pnpm install
+
+            # 2.5 BUILD ASSETS (This generates your CSS)
+            echo "Building assets..."
+            ~/.local/share/pnpm/pnpm run build
             
-            # 3. Nuke the broken PM2 process
+            # 3. Nuke the old PM2 process
             /usr/bin/pm2 delete ${{ github.event.repository.name }} || true
             
             # 4. START DIRECTLY FROM SOURCE
-            # Using npx tsx ensures we don't need a pre-compiled 'dist' folder
+            # We use the full path to npx/tsx or let pnpm handle it for consistency
             echo "Starting from source using tsx..."
-            /usr/bin/pm2 start "npx tsx src/ts/index.ts" --name ${{ github.event.repository.name }}
+            /usr/bin/pm2 start "~/.local/share/pnpm/pnpm exec tsx src/ts/index.ts" --name ${{ github.event.repository.name }}
             
             # 5. Save the process list
             /usr/bin/pm2 save
