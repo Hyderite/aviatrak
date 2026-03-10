@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "composite": true,
+        "outDir": "../dist/js",
+        "rootDir": "./ts",
+        "target": "ES6",
+        "module": "NodeNext"
+    },
+    "include": [
+        "**/*"
+    ]
+}

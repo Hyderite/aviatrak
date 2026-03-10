@@ -1,16 +1,20 @@
 {
     "compilerOptions": {
-        "target": "ES6",
-        "module": "ESNext",
-        "moduleResolution": "node",
-        "outDir": "../dist/js",
-        "rootDir": "./src/ts",
-        "strict": true,
         "composite": true,
-        "allowSyntheticDefaultImports": true,
+        "declaration": true,
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "target": "ES6",
         "esModuleInterop": true,
+        "skipLibCheck": true
     },
-    "include": [
-        "src/ts/**/*"
+    "files": [],
+    "references": [
+        {
+            "path": "./src/tsconfig.json"
+        },
+        {
+            "path": "./public/tsconfig.json"
+        }
     ]
 }
