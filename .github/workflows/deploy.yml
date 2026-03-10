@@ -44,7 +44,7 @@ jobs:
           echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-          cat <<'EOF' > ~/.ssh/config
+          cat <<EOF > ~/.ssh/config
           Host vps
           HostName ${{ secrets.SSH_HOST }}
           User ${{ secrets.SSH_USER }}
@@ -58,4 +58,4 @@ jobs:
           rsync -avz -e ssh ./dist/ vps:/var/www/${{ github.event.repository.name }}/dist/
           rsync -avz -e ssh ./public/dist/ vps:/var/www/${{ github.event.repository.name }}/public/dist/
 
-          ssh vps "pm2 delete ${{ github.event.repository.name }} || true && pm2 start /var/www/${{ github.event.repository.name }}/dist/js/index.js --name ${{ github.event.repository.name }} --update-env"
+          ssh vps "pm2 delete ${{ github.event.repository.name }} || true && sudo fuser -k 8080/tcp || true && pm2 start /var/www/${{ github.event.repository.name }}/dist/js/index.js --name ${{ github.event.repository.name }} --update-env"
