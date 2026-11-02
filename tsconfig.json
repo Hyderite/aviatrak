@@ -1,20 +1,19 @@
 {
     "compilerOptions": {
-        "composite": true,
-        "declaration": true,
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext",
         "target": "ES6",
+        "module": "ESNext",
+        "outDir": "./public/dist/js",
+        "rootDir": "./public/src/ts",
+        "strict": true,
         "esModuleInterop": true,
-        "skipLibCheck": true
+        "moduleResolution": "bundler",
+        "noEmit": false,
+        "allowImportingTsExtensions": false,
+        "noUncheckedSideEffectImports": false,
+        "resolveJsonModule": true,
+        "isolatedModules": true
     },
-    "files": [],
-    "references": [
-        {
-            "path": "./src/tsconfig.json"
-        },
-        {
-            "path": "./public/tsconfig.json"
-        }
+    "include": [
+        "public/src/ts/**/*"
     ]
 }
